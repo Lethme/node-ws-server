@@ -130,7 +130,7 @@ dist
 .pnp.*
 
 # Environment
-*.env.*
+*.env
 
 # Idea files
 .idea/
