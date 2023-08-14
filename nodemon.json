@@ -2,11 +2,12 @@
     "watch": [
         "src",
         ".development.env",
-        ".test.env"
+        ".test.env",
+        "tsconfig.json"
     ],
     "ext": "ts",
     "ignore": [
         "src/**/*.test.ts"
     ],
-    "exec": "cls && ts-node ./src/main.ts"
+    "exec": "cls && ts-node src/main.ts"
 }

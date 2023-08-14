@@ -10,11 +10,25 @@ import {
 	BeforeShutdown,
 	Shutdown
 } from "./core/decorators";
+import {Lobby} from "./lobby";
+import {LobbyHub} from "./lobby/types";
 
 @ServerConfig({
 	port: 5000,
 })
 export class GameServer extends ServerBase {
+	private readonly hub: LobbyHub = LobbyHub.Create();
+
+	public get lobbies() { return this.hub.entries };
+
+	public addLobby() {
+		this.hub.addLobby();
+	}
+
+	public closeLobby(key: number) {
+		this.hub.closeLobby(key);
+	}
+
 	@BeforeStartup()
 	private async beforeStartup(server: Server) {
 		console.log(`Starting server on port ${this.config.port}`);

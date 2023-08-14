@@ -11,8 +11,11 @@ const bootstrap = async () => {
 	const server = new GameServer();
 	await server.run();
 
-	// const metadata = Reflect.getOwnMetadata(Config.LISTEN_METADATA_KEY, Server.prototype, "test");
-	// console.log(metadata);
+	server.addLobby();
+	server.addLobby();
+	server.addLobby();
+
+	console.log(server.lobbies);
 }
 
 bootstrap();

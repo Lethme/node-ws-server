@@ -1,7 +1,7 @@
 export interface LobbyConfig {
     title: string;
     teams: number;
-    maxPlayersPerTeam: number;
+    maxSocketsAmount: number;
     public: boolean;
     password?: string;
 }
