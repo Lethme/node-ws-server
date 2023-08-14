@@ -27,8 +27,6 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 {from: 'public', to: ''},
-                {from: 'sessions.json', to: 'sessions.json'},
-                {from: 'access.json', to: 'access.json'},
                 {from: 'package.json', to: 'package.json'},
             ],
         }),

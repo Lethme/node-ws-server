@@ -2,6 +2,6 @@ import {MethodType} from "../enums";
 
 export interface MethodDescription {
 	name: string;
-	type?: MethodType,
+	type: MethodType,
 	func: Function;
 }

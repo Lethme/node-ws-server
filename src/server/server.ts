@@ -1,28 +1,52 @@
 import {Server, Socket} from "socket.io";
 import {ServerBase} from "./core";
-import {Connection, Disconnection, ServerConfig, Listen, Startup} from "./core/decorators";
+import {
+	Connection,
+	Disconnection,
+	ServerConfig,
+	Listen,
+	Startup,
+	BeforeStartup,
+	BeforeShutdown,
+	Shutdown
+} from "./core/decorators";
 
 @ServerConfig({
 	port: 5000,
 })
 export class GameServer extends ServerBase {
-	@Startup()
-	async startup(server: Server) {
+	@BeforeStartup()
+	private async beforeStartup(server: Server) {
+		console.log(`Starting server on port ${this.config.port}`);
+	}
 
+	@Startup()
+	private async startup(server: Server) {
+		console.log(`Server started on port ${this.config.port}`);
+	}
+
+	@BeforeShutdown()
+	private async beforeShutdown(server: Server) {
+		console.log(`Server on port ${this.config.port} is shutting down`);
+	}
+
+	@Shutdown()
+	private async shut(server: Server) {
+		console.log(`Server on port ${this.config.port} has shut down`);
 	}
 
 	@Connection()
-	async connection(socket: Socket) {
+	private async connection(socket: Socket) {
 		console.log(`Connected socket: ${socket.id}`);
 	}
 
 	@Disconnection()
-	async disconnection(socket: Socket) {
+	private async disconnection(socket: Socket) {
 		console.log(`Disconnected socket: ${socket.id}`);
 	}
 
 	@Listen()
-	async test(socket: Socket, ...args: Array<any>) {
+	private async test(socket: Socket, ...args: Array<any>) {
 		console.log(`Message from socket ${socket.id}: ${args.map(arg => JSON.stringify(arg)).join(" ")}`);
 	}
 }

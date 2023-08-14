@@ -2,6 +2,6 @@ import 'reflect-metadata';
 import {MethodType} from "../enums";
 import {ServerDecoratorBase} from "./server-decorator-base.decorator";
 
-export function Listen() {
-	return ServerDecoratorBase(MethodType.Listen);
+export function BeforeShutdown() {
+	return ServerDecoratorBase(MethodType.BeforeShutdown);
 }

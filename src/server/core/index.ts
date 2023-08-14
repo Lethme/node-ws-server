@@ -6,23 +6,31 @@ import {MethodDescription} from "./types";
 
 export class ServerBase {
 	private readonly server: Server;
+	private serverConfig?: ServerDecoratorConfig;
+	private serverCurrentConfig?: ServerDecoratorConfig;
+	private serverMethods: Array<MethodDescription> = [];
+
+	private get beforeStartupMethod() { return this.serverMethods.find(m => m.type === MethodType.BeforeStartup)?.func };
+	private get startupMethod() { return this.serverMethods.find(m => m.type === MethodType.Startup)?.func };
+	private get beforeShutdownMethod() { return this.serverMethods.find(m => m.type === MethodType.BeforeShutdown)?.func };
+	private get shutdownMethod() { return this.serverMethods.find(m => m.type === MethodType.Shutdown)?.func };
+	private get connectionMethod() { return this.serverMethods.find(m => m.type === MethodType.Connection)?.func };
+	private get disconnectionMethod() { return this.serverMethods.find(m => m.type === MethodType.Disconnection)?.func };
+	private get listenMethods() { return this.serverMethods.filter(m => m.type === MethodType.Listen) };
+
+	protected get config(): ServerDecoratorConfig { return this.serverCurrentConfig! };
 
 	constructor() {
-		const methods = this.getInstanceMethods();
+		const serverMethods = this.getInstanceMethods();
 		const metadata = Reflect.getOwnMetadata(Config.SOCKET_METADATA_KEY, this.constructor);
-		const socketConfig: ServerDecoratorConfig = metadata[0] || Config.DEFAULT_SOCKET_CONFIG;
+		const serverConfig: ServerDecoratorConfig = metadata[0] || Config.DEFAULT_SOCKET_CONFIG;
 
-		console.log(methods);
-		console.log(socketConfig);
+		this.serverConfig = serverConfig;
+		this.serverMethods = serverMethods;
 
 		this.server = new Server();
 
-		this.init(socketConfig, methods);
-		this.server.listen(socketConfig.port!);
-
-		const startupMethod = methods.find(m => m.type === MethodType.Startup);
-
-		startupMethod && startupMethod.func.call(this, this.server);
+		this.init();
 	}
 
 	private getInstanceMethods<T extends ServerBase>(): Array<MethodDescription> {
@@ -34,7 +42,7 @@ export class ServerBase {
 		for (const key in names) {
 			const descriptor = Object.getOwnPropertyDescriptor(proto, names[key]);
 			const method = descriptor?.value;
-			const methodMetadata = Reflect.getOwnMetadata(Config.LISTEN_METADATA_KEY, this.constructor.prototype, method.name);
+			const methodMetadata = Reflect.getOwnMetadata(Config.LISTEN_METADATA_KEY, this.constructor.prototype, method?.name);
 
 			if (
 				method && typeof method === 'function' &&
@@ -42,12 +50,7 @@ export class ServerBase {
 				/__awaiter/.test(method?.toString()) &&
 				methodMetadata &&
 				methodMetadata[0] &&
-				(
-					methodMetadata[0] === MethodType.Listen ||
-					methodMetadata[0] === MethodType.Connection ||
-					methodMetadata[0] === MethodType.Disconnection ||
-					methodMetadata[0] === MethodType.Startup
-				)
+				Object.values(MethodType).some((methodType: MethodType) => methodType === methodMetadata[0])
 			) {
 				methods.push({
 					name: method.name,
@@ -60,21 +63,47 @@ export class ServerBase {
 		return methods;
 	}
 
-	private init(config: ServerDecoratorConfig, methods: Array<MethodDescription>) {
+	private init() {
+		this.serverCurrentConfig = { ...this.serverConfig };
+
+		this.server.removeAllListeners();
+
 		this.server.on("connection", async (socket: Socket) => {
-			const connectionMethod = methods.find(method => method.type === MethodType.Connection);
-			connectionMethod && connectionMethod.func.call(this, socket);
+			this.connectionMethod && this.connectionMethod.call(this, socket);
 
 			socket.on('disconnect', () => {
-				const disconnectionMethod = methods.find(method => method.type === MethodType.Disconnection);
-				disconnectionMethod && disconnectionMethod.func.call(this, socket);
+				this.disconnectionMethod && this.disconnectionMethod.call(this, socket);
 			});
 
-			for (const method of methods.filter(m => m.type === MethodType.Listen)) {
+			for (const method of this.listenMethods) {
 				socket.on(method.name, (...args: Array<any>) => {
 					method.func.call(this, socket, ...args);
 				});
 			}
 		});
+	}
+	
+	public async run() {
+		this.beforeStartupMethod && this.beforeStartupMethod.call(this, this.server);
+		this.server?.listen(this.serverCurrentConfig?.port!);
+		this.startupMethod && this.startupMethod.call(this, this.server);
+		this.serverConfig && (this.serverConfig.port = 6000);
+	}
+
+	public async shutdown() {
+		this.beforeShutdownMethod && this.beforeShutdownMethod.call(this, this.server);
+		this.server?.close();
+		this.shutdownMethod && this.shutdownMethod.call(this, this.server);
+	}
+
+	public async restart() {
+		await this.shutdown();
+		await this.run();
+	}
+
+	public async reload() {
+		await this.shutdown();
+		this.init();
+		await this.run();
 	}
 }

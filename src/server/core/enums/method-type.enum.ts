@@ -3,4 +3,7 @@ export enum MethodType {
 	Connection = 'connection',
 	Disconnection = 'disconnection',
 	Startup = 'startup',
+	BeforeStartup = 'before_startup',
+	Shutdown = 'shutdown',
+	BeforeShutdown = 'before_shutdown',
 }
