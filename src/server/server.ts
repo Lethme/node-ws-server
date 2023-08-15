@@ -11,7 +11,7 @@ import {
 	Startup,
 	Message
 } from "./core/decorators";
-import {LobbyHub} from "./lobby/types";
+import {LobbyHub} from "./hub";
 
 @ServerConfig({
 	port: 5000,

@@ -1,9 +1,9 @@
-import {Lobby} from "../index";
-import {LobbyConfig} from "./lobby-config.interface";
-import {Team} from "../../team";
-import {TeamConfig, TeamSocketInfo} from "../../team/types";
-import {IDisposable, TypeOf} from "../../../utils/types";
-import Config from "../../core/config";
+import {Lobby} from "../lobby";
+import {LobbyConfig} from "../lobby/types";
+import {Team} from "../team";
+import {TeamConfig, TeamSocketInfo} from "../team/types";
+import {IDisposable, TypeOf} from "../../utils/types";
+import Config from "../core/config";
 import {Socket} from "socket.io";
 
 interface LobbyInfo<TConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig> {

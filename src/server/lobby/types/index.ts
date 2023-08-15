@@ -1,4 +1,4 @@
-import { LobbyHub } from "./lobby-hub.class";
+import { LobbyHub } from "../../hub";
 import { LobbyConfig } from "./lobby-config.interface";
 
 export {
