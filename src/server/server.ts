@@ -85,7 +85,7 @@ export class GameServer extends ServerBase {
 	@Message()
 	private async message(socket: Socket, ...args: Array<any>) {
 		console.log(`\nReceived message from socket ${socket.id}:`);
-		console.log(...args);
+		console.log(...args, '\n');
 	}
 
 	@Listen()

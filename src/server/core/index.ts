@@ -77,8 +77,9 @@ export class ServerBase {
 			}
 
 			if (messageMethods && messageMethods.length) {
-				socket.on('message', (...args: Array<any>) => {
-					messageMethods[0].func.call(this, socket, ...args);
+				socket.on('message', async (...args: Array<any>) => {
+					const response = await messageMethods[0].func.call(this, socket, ...args);
+					response && socket.emit('message', response);
 				});
 			}
 
@@ -86,9 +87,11 @@ export class ServerBase {
 				for (const method of listenMethods) {
 					const methodEvent = method.meta[1];
 					const useMethodEvent = methodEvent && typeof methodEvent === 'string';
+					const event = useMethodEvent ? methodEvent : method.name;
 
-					socket.on(useMethodEvent ? methodEvent : method.name, (...args: Array<any>) => {
-						method.func.call(this, socket, ...args);
+					socket.on(event, async (...args: Array<any>) => {
+						const response = await method.func.call(this, socket, ...args);
+						response && socket.emit(event, response);
 					});
 				}
 			}
