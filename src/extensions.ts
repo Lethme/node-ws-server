@@ -57,24 +57,142 @@ declare interface Array<T> {
 	/**
 	 * Distinct the given array by the key selected by the callback.
 	 *
-	 * @param callback - Key selector to distinct given array.
+	 * @param selector - Key selector to distinct the given array.
 	 * @returns New array that doesn't contain any the same elements relying on distinct key selector callback.
 	 */
-	distinct(callback?: (value: T) => any): Array<T>;
+	distinct<K>(selector?: (value: T, index: number, array: Array<T>) => K): Array<T>;
+
+	/**
+	 * Group array elements by selected key.
+	 *
+	 * @param selector - Key selector to group the given array.
+	 */
+	group<K>(selector?: (value: T, index: number, array: Array<T>) => K): Map<K, Array<T>>;
+
+	/**
+	 * Returns the element by its index.
+	 * If index is out of bounds method will return element by mod operation.
+	 *
+	 * @example
+	 * // Usage example
+	 * const array = [1, 2, 3];
+	 *
+	 * array.at(0); // 1
+	 * array.at(2); // 3
+	 *
+	 * array.at(3); // 1
+	 * array.at(5); // 3
+	 *
+	 * array.at(-1) // 3
+	 * array.at(-3) // 1
+	 *
+	 * @param {number} index - Index of an array element.
+	 *
+	 * @returns Element of the given array.
+	 */
+	at(index: number): T;
+
+	/**
+	 * Returns the first element of the array if no callback was provided.
+	 * Else returns the first element accepted by callback condition.
+	 *
+	 * @param predicate - Callback which provides the condition to search in array.
+	 *
+	 * @returns Element of the given array.
+	 */
+	first(predicate?: (value: T, index: number, array: Array<T>) => boolean): T;
+
+	/**
+	 * Returns the last element of the array if no callback was provided.
+	 * Else returns the last element accepted by callback condition.
+	 *
+	 * @param predicate - Callback which provides the condition to search in array.
+	 *
+	 * @returns Element of the given array.
+	 */
+	last(predicate?: (value: T, index: number, array: Array<T>) => boolean): T;
 }
 
 Object.defineProperty(Array.prototype, 'distinct', {
-	value: function <T>(callback?: (value: T) => any): T[] {
+	value: function <T>(this: Array<T>, callback?: (value: T, index: number, array: Array<T>) => any): T[] {
 		if (!callback) {
 			return [...new Set<T>(this)];
 		}
+
 		const distinctValues = new Map();
-		for (const element of this) {
-			const key = callback(element);
+
+		for (let i = 0; i < this.length; i++) {
+			const el = this[i];
+			const key = callback(el, i, this);
+
 			if (!distinctValues.has(key)) {
-				distinctValues.set(key, element);
+				distinctValues.set(key, el);
 			}
 		}
+
 		return Array.from(distinctValues.values());
 	},
+	enumerable: true,
+});
+
+Object.defineProperty(Array.prototype, 'group', {
+	value: function <T, K>(this: Array<T>, selector?: (value: T, index: number, array: Array<T>) => K): Map<K, Array<T>> {
+		const groupedValues = new Map();
+
+		for (let i = 0; i < this.length; i++) {
+			const el = this[i];
+			const key = selector ? selector(el, i, this) : el;
+
+			if (!groupedValues.has(key)) {
+				groupedValues.set(key, []);
+			}
+
+			groupedValues.get(key).push(el);
+		}
+
+		return groupedValues;
+	},
+	enumerable: true,
+});
+
+Object.defineProperty(Array.prototype, 'at', {
+	value: function <T>(this: Array<T>, index: number): T {
+		const rem = index % this.length;
+		return rem >= 0 ? this[rem] : this[this.length + rem];
+	},
+	enumerable: true,
+});
+
+Object.defineProperty(Array.prototype, 'first', {
+	value: function <T>(this: Array<T>, predicate?: (value: T, index: number, array: Array<T>) => boolean): T {
+		if (predicate) {
+			for (let i = 0; i < this.length; i++) {
+				const el = this[i];
+
+				if (predicate(el, i, this)) {
+					return el;
+				}
+			}
+		}
+
+		return this[0];
+	}
+});
+
+Object.defineProperty(Array.prototype, 'last', {
+	value: function <T>(this: Array<T>, predicate?: (value: T, index: number, array: Array<T>) => boolean): T {
+		if (!this.length) return this[0];
+
+		if (predicate) {
+			for (let i = this.length - 1; i >= 0; i--) {
+				const el = this[i];
+
+				if (predicate(el, i, this)) {
+					return el;
+				}
+			}
+		}
+
+		return this[this.length - 1];
+	}
 });

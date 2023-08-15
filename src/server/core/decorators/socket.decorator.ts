@@ -3,6 +3,7 @@ import Config from "../config";
 
 export interface ServerDecoratorConfig {
 	port?: number;
+	maxLobbiesAmount?: number;
 }
 
 export function ServerConfig(config: ServerDecoratorConfig = Config.DEFAULT_SOCKET_CONFIG) {
@@ -13,6 +14,7 @@ export function ServerConfig(config: ServerDecoratorConfig = Config.DEFAULT_SOCK
 			if (!metadata.length) {
 				metadata.push({
 					port: config.port || 8080,
+					maxLobbiesAmount: config.maxLobbiesAmount || 1,
 				} as ServerDecoratorConfig);
 
 				Reflect.defineMetadata(Config.SOCKET_METADATA_KEY, metadata, target);

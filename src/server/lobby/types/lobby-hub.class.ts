@@ -1,31 +1,44 @@
 import {Lobby} from "../index";
 import {LobbyConfig} from "./lobby-config.interface";
 import {Team} from "../../team";
+import {TeamConfig, TeamSocketInfo} from "../../team/types";
+import {TypeOf} from "../../../utils/types";
+import Config from "../../core/config";
+import {Socket} from "socket.io";
 
-interface LobbyInfo<TConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team> {
+interface LobbyInfo<TConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig> {
 	key: number;
-	lobby: Lobby<TConfig, TTeam>;
+	lobby: Lobby<TConfig, TSocket, TTeamConfig>;
 }
 
-type Lobbies<TConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team>
-	= Array<LobbyInfo<TConfig, TTeam>>;
+type Lobbies<TConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig>
+	= Array<LobbyInfo<TConfig, TSocket, TTeamConfig>>;
 
-export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team> {
-	private readonly lobbies: Map<number, Lobby<TLobbyConfig, TTeam>>;
+export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig> {
+	private readonly _lobbies: Map<number, Lobby<TLobbyConfig, TSocket, TTeamConfig>>;
+	private _maxLobbiesAmount: number;
 
-	constructor() {
-		this.lobbies = new Map<number, Lobby<TLobbyConfig, TTeam>>();
+	constructor(maxLobbiesAmount: number = Config.DEFAULT_SOCKET_CONFIG.maxLobbiesAmount) {
+		this._lobbies = new Map<number, Lobby<TLobbyConfig, TSocket, TTeamConfig>>();
+		this._maxLobbiesAmount = maxLobbiesAmount > 0 ? maxLobbiesAmount : Config.DEFAULT_SOCKET_CONFIG.maxLobbiesAmount;
 	}
 
-	public get entries(): Lobbies<TLobbyConfig, TTeam> {
-		return [...this.lobbies.entries()].map(([key, lobby]) => ({ key, lobby }));
+	public get maxSize(): number { return this._maxLobbiesAmount; }
+	public set maxSize(v: number) {
+		if (v > 0) {
+			this._maxLobbiesAmount = v;
+		}
+	}
+
+	public get lobbies(): Lobbies<TLobbyConfig, TSocket, TTeamConfig> {
+		return [...this._lobbies.entries()].map(([key, lobby]) => ({ key, lobby }));
 	}
 
 	private get newLobbyKey(): number {
-		let keys = Array.from(this.lobbies.keys());
+		let keys = Array.from(this._lobbies.keys());
 		keys.sort((a, b) => a - b);
 
-		let lowestAvailableKey = 1;
+		let lowestAvailableKey = 0;
 
 		for (const key of keys) {
 			if (key > lowestAvailableKey) {
@@ -37,12 +50,43 @@ export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TTeam exte
 		return lowestAvailableKey;
 	}
 
-	public addLobby(config: TLobbyConfig) {
-		const lobbyKey = this.newLobbyKey;
-		this.lobbies.set(lobbyKey, new Lobby<TLobbyConfig, TTeam>(config));
+	public addLobby(config: TLobbyConfig): number {
+		if (this._lobbies.size < this._maxLobbiesAmount) {
+			const lobbyKey = this.newLobbyKey;
+			const lobby = new Lobby<TLobbyConfig, TSocket, TTeamConfig>(config);
+			this._lobbies.set(lobbyKey, lobby);
+
+			return lobbyKey;
+		}
+
+		return -1;
 	}
 
 	public closeLobby(key: number) {
-		this.lobbies.delete(key);
+		this._lobbies.delete(key);
+	}
+
+	public getLobby(key: number): Lobby<TLobbyConfig, TSocket, TTeamConfig> | undefined {
+		return this._lobbies.get(key);
+	}
+
+	public getLobbyTeams(key: number): Readonly<Array<Team<TSocket, TTeamConfig>>> | undefined {
+		const lobby = this.getLobby(key);
+
+		if (lobby) {
+			return lobby.lobbyTeams;
+		}
+
+		return undefined;
+	}
+
+	public getLobbyBySocketId(id: TypeOf<Socket, 'id'>): Lobby<TLobbyConfig, TSocket, TTeamConfig> | undefined {
+		return [ ...this._lobbies.values() ].find(lobby => lobby.hasSocket(id));
+	}
+
+	public emit(event: string, ...args: Array<any>) {
+		for (const lobby of this._lobbies.values()) {
+			lobby.emit(event, ...args);
+		}
 	}
 }

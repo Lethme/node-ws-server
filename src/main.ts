@@ -10,12 +10,6 @@ config({
 const bootstrap = async () => {
 	const server = new GameServer();
 	await server.run();
-
-	server.addLobby();
-	server.addLobby();
-	server.addLobby();
-
-	console.log(server.lobbies);
 }
 
 bootstrap();

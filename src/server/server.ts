@@ -1,38 +1,56 @@
 import {Server, Socket} from "socket.io";
 import {ServerBase} from "./core";
 import {
+	BeforeShutdown,
+	BeforeStartup,
 	Connection,
 	Disconnection,
-	ServerConfig,
 	Listen,
+	ServerConfig,
+	Shutdown,
 	Startup,
-	BeforeStartup,
-	BeforeShutdown,
-	Shutdown
+	Message
 } from "./core/decorators";
 import {LobbyHub} from "./lobby/types";
 
 @ServerConfig({
 	port: 5000,
+	maxLobbiesAmount: 2,
 })
 export class GameServer extends ServerBase {
-	private readonly hub: LobbyHub = new LobbyHub();
+	private readonly hub: LobbyHub;
 
-	public get lobbies() { return this.hub.entries };
-
-	public addLobby() {
-		this.hub.addLobby({
-			title: "Test Team",
-			maxSocketsAmount: 5,
-			teams: 2,
-			public: false,
-			password: "Qwerty123",
-		});
+	constructor() {
+		super();
+		this.hub = new LobbyHub(this.config.maxLobbiesAmount);
 	}
 
-	public closeLobby(key: number) {
-		this.hub.closeLobby(key);
-	}
+	// public get lobbies() { return this.hub.entries };
+	//
+	// public addLobby() {
+	// 	const lobbyKey = this.hub.addLobby({
+	// 		title: "Test Lobby",
+	// 		maxSocketsAmount: 5,
+	// 		teams: 2,
+	// 		public: false,
+	// 		password: "Qwerty123",
+	// 	});
+	//
+	// 	const lobby = this.hub.getLobby(lobbyKey);
+	//
+	// 	if (lobby !== undefined) {
+	// 		for (let i = 0; i < lobby.lobbyConfig.teams; i++) {
+	// 			lobby.addTeam({
+	// 				title: `Team #${i}`,
+	// 				maxSocketsAmount: lobby.lobbyConfig.maxSocketsAmount,
+	// 			});
+	// 		}
+	// 	}
+	// }
+	//
+	// public closeLobby(key: number) {
+	// 	this.hub.closeLobby(key);
+	// }
 
 	@BeforeStartup()
 	private async beforeStartup(server: Server) {
@@ -62,6 +80,12 @@ export class GameServer extends ServerBase {
 	@Disconnection()
 	private async disconnection(socket: Socket) {
 		console.log(`Disconnected socket: ${socket.id}`);
+	}
+
+	@Message()
+	private async message(socket: Socket, ...args: Array<any>) {
+		console.log(`\nReceived message from socket ${socket.id}:`);
+		console.log(...args);
 	}
 
 	@Listen()
