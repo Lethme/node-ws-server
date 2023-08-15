@@ -1,20 +1,23 @@
 import {Lobby} from "../index";
+import {LobbyConfig} from "./lobby-config.interface";
+import {Team} from "../../team";
 
-interface LobbyInfo {
+interface LobbyInfo<TConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team> {
 	key: number;
-	lobby: Lobby;
+	lobby: Lobby<TConfig, TTeam>;
 }
 
-type Lobbies = Array<LobbyInfo>;
+type Lobbies<TConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team>
+	= Array<LobbyInfo<TConfig, TTeam>>;
 
-export class LobbyHub {
-	private readonly lobbies: Map<number, Lobby>;
+export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team> {
+	private readonly lobbies: Map<number, Lobby<TLobbyConfig, TTeam>>;
 
 	constructor() {
-		this.lobbies = new Map<number, Lobby>();
+		this.lobbies = new Map<number, Lobby<TLobbyConfig, TTeam>>();
 	}
 
-	public get entries(): Lobbies {
+	public get entries(): Lobbies<TLobbyConfig, TTeam> {
 		return [...this.lobbies.entries()].map(([key, lobby]) => ({ key, lobby }));
 	}
 
@@ -34,25 +37,12 @@ export class LobbyHub {
 		return lowestAvailableKey;
 	}
 
-	public addLobby() {
+	public addLobby(config: TLobbyConfig) {
 		const lobbyKey = this.newLobbyKey;
-
-		this.lobbies.set(lobbyKey, new Lobby({
-			title: "Test Lobby",
-			teams: 2,
-			maxSocketsAmount: 5,
-			public: false,
-			password: "Qwerty123",
-		}));
-
-		console.log(this.lobbies.get(lobbyKey)?.lobbyConfig);
+		this.lobbies.set(lobbyKey, new Lobby<TLobbyConfig, TTeam>(config));
 	}
 
 	public closeLobby(key: number) {
 		this.lobbies.delete(key);
-	}
-
-	public static Create(): LobbyHub {
-		return new LobbyHub();
 	}
 }

@@ -2,17 +2,17 @@ import {Team} from "../team";
 import {getHash} from "../utils";
 import {LobbyConfig} from "./types";
 
-export class Lobby {
-    private teams: Array<Team> = [];
-    private config: LobbyConfig;
+export class Lobby<TConfig extends LobbyConfig = LobbyConfig, TTeam extends Team = Team> {
+    private teams: Array<TTeam> = [];
+    private config: TConfig;
 
-    constructor(config: LobbyConfig) {
+    constructor(config: TConfig) {
         this.config = { ...config };
 
         this.processConfig();
     }
 
-    public get lobbyConfig(): LobbyConfig { return { ...this.config } }
+    public get lobbyConfig(): TConfig { return { ...this.config } }
 
     private processConfig() {
         if (!this.config.public) {
@@ -22,9 +22,5 @@ export class Lobby {
                 this.config.password = getHash("00000000");
             }
         }
-    }
-
-    public static Create(config: LobbyConfig): Lobby {
-        return new Lobby(config);
     }
 }

@@ -10,19 +10,24 @@ import {
 	BeforeShutdown,
 	Shutdown
 } from "./core/decorators";
-import {Lobby} from "./lobby";
 import {LobbyHub} from "./lobby/types";
 
 @ServerConfig({
 	port: 5000,
 })
 export class GameServer extends ServerBase {
-	private readonly hub: LobbyHub = LobbyHub.Create();
+	private readonly hub: LobbyHub = new LobbyHub();
 
 	public get lobbies() { return this.hub.entries };
 
 	public addLobby() {
-		this.hub.addLobby();
+		this.hub.addLobby({
+			title: "Test Team",
+			maxSocketsAmount: 5,
+			teams: 2,
+			public: false,
+			password: "Qwerty123",
+		});
 	}
 
 	public closeLobby(key: number) {
