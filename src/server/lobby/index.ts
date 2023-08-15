@@ -50,7 +50,8 @@ export class Lobby<TConfig extends LobbyConfig = LobbyConfig, TSocket extends Te
 
     dispose(): void {
         while (this._teams.length) {
-
+            this._teams.last().dispose();
+            this._teams.pop();
         }
     }
 }

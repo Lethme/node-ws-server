@@ -2,7 +2,7 @@ import {Lobby} from "../index";
 import {LobbyConfig} from "./lobby-config.interface";
 import {Team} from "../../team";
 import {TeamConfig, TeamSocketInfo} from "../../team/types";
-import {TypeOf} from "../../../utils/types";
+import {IDisposable, TypeOf} from "../../../utils/types";
 import Config from "../../core/config";
 import {Socket} from "socket.io";
 
@@ -14,7 +14,7 @@ interface LobbyInfo<TConfig extends LobbyConfig = LobbyConfig, TSocket extends T
 type Lobbies<TConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig>
 	= Array<LobbyInfo<TConfig, TSocket, TTeamConfig>>;
 
-export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig> {
+export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket extends TeamSocketInfo = TeamSocketInfo, TTeamConfig extends TeamConfig = TeamConfig> implements IDisposable {
 	private readonly _lobbies: Map<number, Lobby<TLobbyConfig, TSocket, TTeamConfig>>;
 	private _maxLobbiesAmount: number;
 
@@ -88,5 +88,13 @@ export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket ex
 		for (const lobby of this._lobbies.values()) {
 			lobby.emit(event, ...args);
 		}
+	}
+
+	dispose(): void {
+		for (const lobby of this._lobbies.values()) {
+			lobby.dispose();
+		}
+
+		this._lobbies.clear();
 	}
 }
