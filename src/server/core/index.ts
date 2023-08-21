@@ -4,6 +4,10 @@ import {ServerDecoratorConfig} from "./decorators/socket.decorator";
 import {MethodType} from "./enums";
 import {MethodDescription} from "./types";
 
+type EventNames<T> = {
+	[K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+}[keyof T];
+
 export class ServerBase {
 	private readonly _server: Server;
 	private readonly _config?: ServerDecoratorConfig;
@@ -11,7 +15,7 @@ export class ServerBase {
 	private _methods: Map<MethodType, Array<MethodDescription>> = new Map();
 
 	protected get config(): ServerDecoratorConfig { return this._currentConfig!; }
-	protected get server(): Server { return this._server; }
+	//protected get server(): Server { return this._server; }
 
 	constructor() {
 		const methods = this.getInstanceMethods();
@@ -103,13 +107,13 @@ export class ServerBase {
 		const startupMethods = this._methods.get(MethodType.Startup);
 
 		if (beforeStartupMethods && beforeStartupMethods.length) {
-			beforeStartupMethods[0].func.call(this, this.server);
+			beforeStartupMethods[0].func.call(this, this._server);
 		}
 
 		this._server.listen(this._currentConfig?.port!);
 
 		if (startupMethods && startupMethods.length) {
-			startupMethods[0].func.call(this, this.server);
+			startupMethods[0].func.call(this, this._server);
 		}
 	}
 
@@ -118,13 +122,13 @@ export class ServerBase {
 		const shutdownMethods = this._methods.get(MethodType.Shutdown);
 
 		if (beforeShutdownMethods && beforeShutdownMethods.length) {
-			beforeShutdownMethods[0].func.call(this, this.server);
+			beforeShutdownMethods[0].func.call(this, this._server);
 		}
 
 		this._server.close();
 
 		if (shutdownMethods && shutdownMethods.length) {
-			shutdownMethods[0].func.call(this, this.server);
+			shutdownMethods[0].func.call(this, this._server);
 		}
 	}
 
@@ -137,5 +141,40 @@ export class ServerBase {
 		await this.shutdown();
 		this.init();
 		await this.run();
+	}
+
+	protected async emit(ev: string, socket?: Socket) {
+		const emits = this._methods.get(MethodType.Emit);
+		const method = emits?.first((m) => {
+			return m.name === ev || (m.meta[1] && typeof m.meta[1] === 'string' && m.meta[1] === ev);
+		});
+
+		if (method) {
+			const methodEvent = method.meta[1];
+			const useMethodEvent = methodEvent && typeof methodEvent === 'string';
+			const event = useMethodEvent ? methodEvent : method.name;
+
+			const response = await method.func.call(this);
+
+			if (!socket) {
+				this._server.emit(event, response);
+			} else {
+				socket.emit(ev, response);
+			}
+		}
+	}
+
+	protected async call(ev: string): Promise<any> {
+		const emits = this._methods.get(MethodType.Emit);
+		const method = emits?.first((m) => {
+			return m.name === ev || (m.meta[1] && typeof m.meta[1] === 'string' && m.meta[1] === ev);
+		});
+
+		if (method) {
+			const response = await method.func.call(this);
+			return response || null;
+		}
+
+		return null;
 	}
 }

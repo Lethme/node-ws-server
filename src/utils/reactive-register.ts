@@ -40,6 +40,6 @@ export class ReactiveRegister {
 		const key = this.GetAvailableMapKey(this._ComputedMap);
 		this._ComputedMap.set(key, computed as ComputedWrapper<T>);
 
-		return key
+		return key;
 	}
 }

@@ -7,4 +7,5 @@ export enum MethodType {
 	Shutdown = 'shutdown',
 	BeforeShutdown = 'before_shutdown',
 	Message = 'message',
+	Emit = 'emit',
 }

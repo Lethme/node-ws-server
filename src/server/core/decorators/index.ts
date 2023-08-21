@@ -7,6 +7,7 @@ import { BeforeStartup } from "./before-startup.decorator";
 import { Shutdown } from "./shutdown.decorator";
 import { BeforeShutdown } from "./before-shutdown.decorator";
 import { Message } from "./message.decorator";
+import { Emit } from "./emit.decorator";
 
 export {
 	ServerConfig,
@@ -18,4 +19,5 @@ export {
 	Shutdown,
 	BeforeShutdown,
 	Message,
+	Emit,
 }

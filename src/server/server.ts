@@ -9,7 +9,7 @@ import {
 	ServerConfig,
 	Shutdown,
 	Startup,
-	Message
+	Message, Emit
 } from "./core/decorators";
 import {LobbyHub} from "./hub";
 
@@ -25,8 +25,6 @@ export class GameServer extends ServerBase {
 		this.hub = new LobbyHub(this.config.maxLobbiesAmount);
 	}
 
-	// public get lobbies() { return this.hub.entries };
-	//
 	// public addLobby() {
 	// 	const lobbyKey = this.hub.addLobby({
 	// 		title: "Test Lobby",
@@ -85,7 +83,17 @@ export class GameServer extends ServerBase {
 	@Message()
 	private async message(socket: Socket, ...args: Array<any>) {
 		console.log(`\nReceived message from socket ${socket.id}:`);
-		console.log(...args, '\n');
+
+		for (const arg of args) {
+			console.log(arg);
+		}
+
+		console.log();
+	}
+
+	@Emit('lobbies')
+	private async getLobbies() {
+		return this.hub.lobbies;
 	}
 
 	@Listen()

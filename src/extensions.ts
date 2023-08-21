@@ -160,7 +160,6 @@ Object.defineProperty(Array.prototype, 'at', {
 		const rem = index % this.length;
 		return rem >= 0 ? this[rem] : this[this.length + rem];
 	},
-	enumerable: true,
 });
 
 Object.defineProperty(Array.prototype, 'first', {

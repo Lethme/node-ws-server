@@ -11,6 +11,7 @@ export interface Computed<T> {
 }
 
 export interface ComputedWrapper<T> extends Computed<T> {
+	id: number;
 	update(): void;
 }
 
@@ -34,11 +35,9 @@ export function computed<T>(watcher: ComputedUpdate<T>): Computed<T> {
 		value: function (this: Computed<T>) {
 			computedValue = watcher.call(computedValue, computedValue as T, oldComputedValue as T);
 
-			(async () => {
-				for (const watcher of computedWatchers) {
-					watcher && await watcher.call(computedValue, computedValue as T, oldComputedValue as T);
-				}
-			})();
+			for (const watcher of computedWatchers) {
+				watcher && watcher.call(computedValue, computedValue as T, oldComputedValue as T);
+			}
 		}
 	});
 
@@ -65,7 +64,11 @@ export function computed<T>(watcher: ComputedUpdate<T>): Computed<T> {
 		}
 	});
 
-	ReactiveRegister.RegisterComputed(computedObj as Computed<T>);
+	const id = ReactiveRegister.RegisterComputed(computedObj as Computed<T>);
+
+	Object.defineProperty(computedObj, 'id', {
+		get(): number { return id; }
+	});
 
 	return computedObj as Computed<T>;
 }

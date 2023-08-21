@@ -9,6 +9,10 @@ export interface Proxy<T> {
 	unwatch(watcher?: ProxyWatcher<T>): void;
 }
 
+export interface ProxyWrapper<T> extends Proxy<T> {
+	id: number;
+}
+
 export function proxy<T>(initialValue?: T, callback?: ProxyWatcher<T>): Proxy<T> {
 	let oldProxyValue: T | undefined;
 	let proxyValue: T | undefined = initialValue;
@@ -26,11 +30,9 @@ export function proxy<T>(initialValue?: T, callback?: ProxyWatcher<T>): Proxy<T>
 				oldProxyValue = proxyValue;
 				proxyValue = v;
 
-				(async () => {
-					for (const watcher of [callback, ...proxyWatchers]) {
-						watcher && await watcher.call(proxyValue, proxyValue as T, oldProxyValue as T);
-					}
-				})();
+				for (const watcher of [callback, ...proxyWatchers]) {
+					watcher && watcher.call(proxyValue, proxyValue as T, oldProxyValue as T);
+				}
 			}
 		}
 	});
@@ -58,7 +60,11 @@ export function proxy<T>(initialValue?: T, callback?: ProxyWatcher<T>): Proxy<T>
 		}
 	});
 
-	ReactiveRegister.RegisterProxy(proxyObj as Proxy<T>);
+	const id = ReactiveRegister.RegisterProxy(proxyObj as Proxy<T>);
+
+	Object.defineProperty(proxyObj, 'id', {
+		get(): number { return id; }
+	});
 
 	return proxyObj as Proxy<T>;
 }
