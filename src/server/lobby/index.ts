@@ -15,7 +15,7 @@ export class Lobby<TConfig extends LobbyConfig = LobbyConfig, TSocket extends Te
     }
 
     public get lobbyConfig(): TConfig { return { ...this._config } }
-    public get lobbyTeams(): Readonly<typeof this._teams> {
+    public get lobbyTeams(): Readonly<Array<Team<TSocket, TTeamConfig>>> {
         return [ ...this._teams ];
     }
 

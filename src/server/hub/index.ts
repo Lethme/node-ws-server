@@ -20,12 +20,12 @@ export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket ex
 
 	constructor(maxLobbiesAmount: number = Config.DEFAULT_SOCKET_CONFIG.maxLobbiesAmount) {
 		this._lobbies = new Map<number, Lobby<TLobbyConfig, TSocket, TTeamConfig>>();
-		this._maxLobbiesAmount = maxLobbiesAmount > 0 ? maxLobbiesAmount : Config.DEFAULT_SOCKET_CONFIG.maxLobbiesAmount;
+		this._maxLobbiesAmount = maxLobbiesAmount > -1 ? maxLobbiesAmount : Config.DEFAULT_SOCKET_CONFIG.maxLobbiesAmount;
 	}
 
 	public get maxSize(): number { return this._maxLobbiesAmount; }
 	public set maxSize(v: number) {
-		if (v > 0) {
+		if (v > -1) {
 			this._maxLobbiesAmount = v;
 		}
 	}
@@ -51,7 +51,7 @@ export class LobbyHub<TLobbyConfig extends LobbyConfig = LobbyConfig, TSocket ex
 	}
 
 	public addLobby(config: TLobbyConfig): number {
-		if (this._lobbies.size < this._maxLobbiesAmount) {
+		if (!this._maxLobbiesAmount || this._lobbies.size < this._maxLobbiesAmount) {
 			const lobbyKey = this.newLobbyKey;
 			const lobby = new Lobby<TLobbyConfig, TSocket, TTeamConfig>(config);
 			this._lobbies.set(lobbyKey, lobby);

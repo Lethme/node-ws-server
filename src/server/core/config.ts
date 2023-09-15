@@ -5,7 +5,7 @@ namespace Config {
 	export const SOCKET_METADATA_KEY = Symbol('socket_metadata_key');
 	export const DEFAULT_SOCKET_CONFIG: Required<ServerDecoratorConfig> = Object.freeze({
 		port: 8080,
-		maxLobbiesAmount: 1,
+		maxLobbiesAmount: 0,
 	})
 }
 
